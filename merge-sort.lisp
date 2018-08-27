@@ -34,8 +34,7 @@
   (with-gensyms (i-a i-b i-aux v-a v-b k-a k-b merge-block) 
     `(locally
 	 (declare (type fixnum ,start-a ,end-a ,start-b ,end-b ,start-aux)
-		  (type ,type ,a ,b)
-		  (type simple-vector ,aux)
+		  (type ,type ,a ,b ,aux)
 		  (type function ,predicate ,@(if key `(,key))))
        (block ,merge-block
 	 (let ((,i-a ,start-a)
@@ -65,7 +64,7 @@
 		  (loop 
 		    (if (funcall ,predicate ,k-b ,k-a)
 			(progn 
-			  (setf (svref ,aux ,i-aux) ,v-b
+			  (setf (,ref ,aux ,i-aux) ,v-b
 				,i-aux (+ ,i-aux 1)
 				,i-b (+ ,i-b 1))
 			  (when (= ,i-b ,end-b) (return))
@@ -74,7 +73,7 @@
 				      `(,k-b (funcall ,key ,v-b))
 				      `(,k-b ,v-b))))
 			(progn 
-			  (setf (svref ,aux ,i-aux) ,v-a
+			  (setf (,ref ,aux ,i-aux) ,v-a
 				,i-aux (+ ,i-aux 1)
 				,i-a (+ ,i-a 1))
 			  (when (= ,i-a ,end-a)
@@ -88,12 +87,11 @@
 				      `(,k-a (funcall ,key ,v-a))
 				      `(,k-a ,v-a))))))))
 	   (loop
-	     (setf (svref ,aux ,i-aux) ,v-a
+	     (setf (,ref ,aux ,i-aux) ,v-a
 		   ,i-a (+ ,i-a 1))
 	     (when (= ,i-a ,end-a) (return))
 	     (setf ,v-a (,ref ,a ,i-a)
 		   ,i-aux (+ ,i-aux 1))))))))
-
 
 (defmacro merge-sort-body (type ref mpredicate msequence mkey mstart mend)
   (with-gensyms (merge-sort-call maux aux sequence start end predicate key mid direction)
@@ -116,8 +114,8 @@
 						  ,mid ,end ,aux ,start ,predicate ,key)
 			   `(merge-sequences-body ,type ,ref ,sequence ,start ,mid ,sequence 
 						  ,mid ,end ,aux ,start ,predicate)))))
-	   (let ((,maux (make-array ,mend)))
-	     (declare (type simple-vector ,maux))
+	   (let ((,maux (make-sequence (type-of ,msequence) (length ,msequence))))
+	     (declare (type ,type ,maux))
 	     (,merge-sort-call ,msequence ,mstart ,mend ,mpredicate ,mkey ,maux nil))))))
 
 
